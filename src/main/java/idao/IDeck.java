@@ -1,5 +1,9 @@
 package idao;
 
-public class IDeck {
+import model.Deck;
+
+public interface IDeck {
+	
+	public Deck getDeckFromName();
 
 }

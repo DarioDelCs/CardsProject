@@ -1,5 +1,11 @@
 package idao;
 
-public class ICard {
+import java.util.ArrayList;
+
+import model.Card;
+
+public interface ICard {
+	
+	public ArrayList<Card> getAllCards();
 
 }
