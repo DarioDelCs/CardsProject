@@ -22,8 +22,8 @@ public class Main extends JFrame{
 		new View(pPanel);
 		
 		add(pPanel);
-		setTitle("Desck Selector");
-		setSize(800, 800);
+		setTitle("Deck Selector");
+		setSize(1200, 500);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setLocationRelativeTo(null);
 		setVisible(true);
