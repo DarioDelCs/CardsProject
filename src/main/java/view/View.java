@@ -5,11 +5,11 @@ import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
 import java.util.Random;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -17,13 +17,15 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 
+import controlador.Logica;
 import daoImpl.ExistCardImpl;
+import daoImpl.MongoDeckImpl;
 import model.Card;
+import model.Deck;
 
 public class View implements ActionListener{
 
 	private Logica logic;
-	private ExistCardImpl cards;
 	
 	private JPanel pPanel;
 	private GridBagConstraints pConstraints;
@@ -35,9 +37,9 @@ public class View implements ActionListener{
 	private JList<Card> pLeftList, pRightList;
 	private DefaultListModel<Card> pLeftListModel, pRightListModel;
 	
-	public View(JPanel pPanel) {
+	public View(JPanel pPanel, Logica logic) {
 		this.pPanel = pPanel;
-		logic = new Logica();
+		this.logic = new Logica();
 		view();
 	}
 	
@@ -129,14 +131,18 @@ Botó6 + input: Load Deck, carrega una baralla introduint en el input el nom de l
 
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource() == pBtLoadCards) {//carga las cartas
-			logic.loadCards();
+			logic.loadCards(pLeftListModel, pRightListModel);
 		}else if(e.getSource() == pBtToLeft) {//quita una carta del mazo
-			logic.deleteCardFromDeck();
+			logic.deleteCardFromDeck(pLeftListModel, pRightListModel, pRightList);
 		}else if(e.getSource() == pBtToRight) {//añade una carta al mazo
-			logic.addCardToDeck();
+			logic.addCardToDeck(pLeftListModel, pRightListModel, pLeftList);
 		}else if (e.getSource() == pBtRnd) {//carga un mazo aleatorio
-			logic.loadCards();
-			logic.randomCards();
+			logic.loadCards(pLeftListModel, pRightListModel);
+			logic.randomCards(pLeftListModel, pRightListModel);
+		}else if(e.getSource() == pBtSave) {
+			logic.saveDeck(pLeftListModel, pRightListModel, null);
+		}else if(e.getSource() == pBtLoadDeck) {
+			logic.getCardsFromDeck(pLeftListModel, pRightListModel, pTfDeckName.getText());
 		}
 			//		pBtLoadCards.addActionListener(this);
 			//		pBtRnd.addActionListener(this);
@@ -145,58 +151,4 @@ Botó6 + input: Load Deck, carrega una baralla introduint en el input el nom de l
 			//		pBtToRight.addActionListener(this);
 //		pBtLoadDeck.addActionListener(this);
 	}
-	
-	//clase privada para la logica de las vistas
-	private class Logica {
-		
-		private int valTotal=0;
-		
-		//vaciamos las listas y ponemos todas las cartas a la lista de la seleccion
-		private void loadCards() {
-			cards = ExistCardImpl.getInstance();
-			pLeftListModel.clear();
-			pRightListModel.clear();
-			valTotal=0;
-			for (Card card : cards.getAllCards()) {
-				pLeftListModel.addElement(card);
-			}
-		}
-		
-		//hacemos una baraja aleatoria
-		private void randomCards() {
-			do {
-				Card selectedCard = cards.getAllCards().get(new Random().nextInt(cards.getAllCards().size()));
-				if((valTotal+selectedCard.getValue())<=20) {
-					pRightListModel.addElement(selectedCard);
-					pLeftListModel.removeElement(selectedCard);
-					valTotal = valTotal+selectedCard.getValue();
-				}else {
-					break;
-				}
-			}while(true);
-		}
-		
-		//eliminamos una carta de la baraja
-		private void deleteCardFromDeck() {
-			valTotal = valTotal - pRightList.getSelectedValue().getValue();
-			pLeftListModel.addElement(pRightList.getSelectedValue());
-			pRightListModel.remove(pRightList.getSelectedIndex());
-		}
-		//añadimos una carta a la baraja
-		private void addCardToDeck() {
-			if(!isDeckCompleted()) {
-				valTotal = valTotal + pLeftList.getSelectedValue().getValue();
-				pRightListModel.addElement(pLeftList.getSelectedValue());
-				pLeftListModel.remove(pLeftList.getSelectedIndex());
-			}else {
-				JOptionPane.showMessageDialog(null, "Mazo lleno");
-			}
-		}
-		
-		//si aun nos queda sitio en la baraja, devolvemos que no esta completo
-		private boolean isDeckCompleted() {
-			return valTotal+pLeftList.getSelectedValue().getValue()>20;
-		}
-	}
-	
 }

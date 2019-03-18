@@ -5,6 +5,7 @@ import java.awt.GridBagLayout;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
+import controlador.Logica;
 import view.View;
 
 public class Main extends JFrame{
@@ -19,7 +20,7 @@ public class Main extends JFrame{
 		pPanel = new JPanel();
 		pPanel.setLayout(new GridBagLayout());
 
-		new View(pPanel);
+		new View(pPanel, new Logica());
 		
 		add(pPanel);
 		setTitle("Deck Selector");
