@@ -22,7 +22,7 @@ public class ExistCardImpl implements ICard{
 	private static ExistCardImpl existCardImpl;
 	
 	private final String driver = "org.exist.xmldb.DatabaseImpl"; 
-	private final String uri = "xmldb:exist://localhost:8585/exist/xmlrpc/db/"; //modificar por el puerto correspondiendo, y la IP en caso de que no sea en local
+	private final String uri = "xmldb:exist://localhost:8080/exist/xmlrpc/db/"; //modificar por el puerto correspondiendo, y la IP en caso de que no sea en local
 	private final String resourceName = "cartas.xml"; //modificar por el nombre que tiene el fichero en la base de datos
 	
 	private Class cl;

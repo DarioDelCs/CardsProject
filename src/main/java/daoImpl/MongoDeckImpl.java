@@ -1,32 +1,28 @@
 package daoImpl;
 
-import java.util.ArrayList;
 import java.util.NoSuchElementException;
 
-import javax.swing.JOptionPane;
+import org.bson.Document;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
-import com.mongodb.BasicDBObject;
-import com.mongodb.DB;
-import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
-import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
-import com.mongodb.util.JSON;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
 
 import idao.IDeck;
-import model.Card;
 import model.Deck;
 
 public class MongoDeckImpl implements IDeck{
 
 	private MongoClientURI connectionString;
 	private MongoClient mongoClient;
-	private DB database;
-	private DBCollection collection;
+	private MongoDatabase database;
+	private MongoCollection<Document> collection;
 	
 	private void open() {
 		connectionString = new MongoClientURI("mongodb://localhost:27017");
@@ -39,7 +35,7 @@ public class MongoDeckImpl implements IDeck{
 	
 	//metodo para conectarnos a una BD y abrir(o crear en caso de que aun no exista) una coleccion
 	private void connect() {
-		database = mongoClient.getDB("dbDecks");//nos conectamos a la base de datos dbDecks(si no esta la creara al insertar)
+		database = mongoClient.getDatabase("dbDecks");//nos conectamos a la base de datos dbDecks(si no esta la creara al insertar)
 		collection = database.getCollection("decks");//recogemos la colecion elegida, si no existe al insertar la creara
 	}
 	private void disconnect() {
@@ -51,14 +47,12 @@ public class MongoDeckImpl implements IDeck{
 		open();
 		connect();
 		
-		BasicDBObject searchQuery = new BasicDBObject();
-		searchQuery.put("name", name);
-		DBCursor cursor = collection.find(searchQuery);
+		MongoCursor<Document> cursor = collection.find(Filters.eq("name", name)).iterator();
 		
 		Deck deck;
 		try {
-			DBObject object = cursor.next();
-			deck = new Gson().fromJson(object.toString(), Deck.class);
+			Document document = cursor.next();
+			deck = new Gson().fromJson(document.toJson(), Deck.class);
 		}catch (NoSuchElementException e) {
 			deck=null;
 		}
@@ -72,19 +66,19 @@ public class MongoDeckImpl implements IDeck{
 		open();
 		connect();
 
-		BasicDBObject searchQuery = new BasicDBObject();
-		searchQuery.put("name", deck.getName());
-		DBCursor cursor = collection.find(searchQuery);
-		
+		MongoCursor<Document> cursor = collection.find(Filters.eq("name", deck.getName())).iterator();
+		ObjectMapper mapper = new ObjectMapper();
+
 		boolean saved=false;
-		if(cursor.size()==0) {
-			DBObject obj=null;
+		if(!cursor.hasNext()) {
+			String userJson = null;
 			try {
-				obj = (DBObject) JSON.parse(new ObjectMapper().writeValueAsString(deck));
+				userJson = mapper.writeValueAsString(deck);
 			} catch (JsonProcessingException e) {
 				e.printStackTrace();
 			}
-			collection.insert(obj);
+            Document userDoc = Document.parse(userJson);
+			collection.insertOne(userDoc);
 			saved=true;
 		}
 		
@@ -97,21 +91,23 @@ public class MongoDeckImpl implements IDeck{
 		open();
 		connect();
 
-		BasicDBObject searchQuery = new BasicDBObject();
-		searchQuery.put("name", deck.getName());
-		DBCursor cursor = collection.find(searchQuery);
+		MongoCursor<Document> cursor = collection.find(Filters.eq("name", deck.getName())).iterator();
+		ObjectMapper mapper = new ObjectMapper();
 		
 		boolean saved=false;
-		if(cursor.size()!=0) {
-			DBObject obj=null;
+		if(cursor.hasNext()) {
+			String userJson = null;
 			try {
-				obj = (DBObject) JSON.parse(new ObjectMapper().writeValueAsString(deck));
+				userJson = mapper.writeValueAsString(deck);
 			} catch (JsonProcessingException e) {
 				e.printStackTrace();
 			}
-			collection.insert(obj);
+            Document userDoc = Document.parse(userJson);
+            System.out.println(Filters.eq("name", deck.getName()));
+			collection.updateOne(Filters.eq("name", deck.getName()), userDoc);
 			saved=true;
 		}
+		
 		
 		disconnect();
 		close();

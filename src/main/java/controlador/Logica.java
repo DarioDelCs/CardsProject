@@ -89,10 +89,10 @@ public class Logica {
 				}
 			}
 		}else {
-			if(mongoDeckImpl.saveDeck(loadDeck)) {
-				JOptionPane.showMessageDialog(null, "Mazo insertado correcamente");
+			if(mongoDeckImpl.updateDeck(loadDeck)) {
+				JOptionPane.showMessageDialog(null, "Mazo actualizado correcamente");
 			}else {
-				JOptionPane.showMessageDialog(null, "Este mazo ya existe", "Error al insertar el mazo", JOptionPane.WARNING_MESSAGE);
+				JOptionPane.showMessageDialog(null, "Vuelva a cargar el mazo e intente volver a actualizarlo", "Error al actualizar el mazo", JOptionPane.WARNING_MESSAGE);
 			}
 		}
 		loadDeck=null;
