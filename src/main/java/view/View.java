@@ -5,23 +5,17 @@ import java.awt.GridBagConstraints;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.Random;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JList;
-import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 
 import controlador.Logica;
-import daoImpl.ExistCardImpl;
-import daoImpl.MongoDeckImpl;
 import model.Card;
-import model.Deck;
 
 public class View implements ActionListener{
 
@@ -120,14 +114,6 @@ public class View implements ActionListener{
 		pBtToRight.addActionListener(this);
 		pBtLoadDeck.addActionListener(this);
 	}
-/*
-Botó1: Load cards, ha de permetre carregar les cartes emmagatzemades en una base de dades exist-db en format xml (consulta el format a l'apartat especificacions no funcionals)
-Botó2: Rnd Deck, ha de generar una barralla de cartes aleatoria respectant la restricció de valors de cartes definit a l'apartat especificacions no funcionals
-Botó3: Save Deck, ha de permetre guarda una barralla de cartes creada o per selecció manual de l'usuari o pel botó 2 en una base de dades MongoDB, una vegada guardada la baralla, ha de sortir un missatge per informar a l'usuari i netejar el panell de baralles.
-Botó4: ->, ha de permetre moure una o més d'una carta de la col·lecció a la baralla
-Botó5: <-, ha de permetre moure una o més d'una carta de la baralla a la col·lecció
-Botó6 + input: Load Deck, carrega una baralla introduint en el input el nom de la baralla, si no existeix s'ha d'indicar a l'usuari, si existeix es carrega la baralla i permet fer modificacions i guardar-les
-*/
 
 	public void actionPerformed(ActionEvent e) {
 		if(e.getSource() == pBtLoadCards) {//carga las cartas
@@ -139,16 +125,10 @@ Botó6 + input: Load Deck, carrega una baralla introduint en el input el nom de l
 		}else if (e.getSource() == pBtRnd) {//carga un mazo aleatorio
 			logic.loadCards(pLeftListModel, pRightListModel);
 			logic.randomCards(pLeftListModel, pRightListModel);
-		}else if(e.getSource() == pBtSave) {
+		}else if(e.getSource() == pBtSave) {//guarda un mazo
 			logic.saveDeck(pLeftListModel, pRightListModel, null);
-		}else if(e.getSource() == pBtLoadDeck) {
+		}else if(e.getSource() == pBtLoadDeck) {//carga un mazo en concreto
 			logic.getCardsFromDeck(pLeftListModel, pRightListModel, pTfDeckName.getText());
 		}
-			//		pBtLoadCards.addActionListener(this);
-			//		pBtRnd.addActionListener(this);
-//		pBtSave.addActionListener(this);
-			//		pBtToLeft.addActionListener(this);
-			//		pBtToRight.addActionListener(this);
-//		pBtLoadDeck.addActionListener(this);
 	}
 }

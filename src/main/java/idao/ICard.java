@@ -7,6 +7,6 @@ import model.Card;
 public interface ICard {
 	
 	public ArrayList<Card> getAllCards();
-	public Card getCardFromId(int id);
+//	public Card getCardFromId(int id);
 
 }

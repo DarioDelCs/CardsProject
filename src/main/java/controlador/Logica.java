@@ -20,7 +20,6 @@ public class Logica {
 	private ExistCardImpl cards;
 	
 	//a la hora de cargar
-	private boolean load = false;
 	private Deck loadDeck;
 	
 	public Logica() {
@@ -41,7 +40,7 @@ public class Logica {
 	//hacemos una baraja aleatoria
 	public void randomCards(DefaultListModel<Card> pLeftListModel, DefaultListModel<Card> pRightListModel) {
 		do {
-			Card selectedCard = cards.getAllCards().get(new Random().nextInt(cards.getAllCards().size()));
+			Card selectedCard = pLeftListModel.get(new Random().nextInt(pLeftListModel.size()));
 			if((valTotal+selectedCard.getValue())<=20) {
 				pRightListModel.addElement(selectedCard);
 				pLeftListModel.removeElement(selectedCard);
@@ -54,18 +53,22 @@ public class Logica {
 	
 	//eliminamos una carta de la baraja
 	public void deleteCardFromDeck(DefaultListModel<Card> pLeftListModel, DefaultListModel<Card> pRightListModel, JList<Card> pRightList) {
-		valTotal = valTotal - pRightList.getSelectedValue().getValue();
-		pLeftListModel.addElement(pRightList.getSelectedValue());
-		pRightListModel.remove(pRightList.getSelectedIndex());
+		if(pRightList.getSelectedValue()!=null) {
+			valTotal = valTotal - pRightList.getSelectedValue().getValue();
+			pLeftListModel.addElement(pRightList.getSelectedValue());
+			pRightListModel.remove(pRightList.getSelectedIndex());
+		}
 	}
 	//añadimos una carta a la baraja
 	public void addCardToDeck(DefaultListModel<Card> pLeftListModel, DefaultListModel<Card> pRightListModel, JList<Card> pLeftList) {
-		if(!isDeckCompleted(pLeftList)) {
-			valTotal = valTotal + pLeftList.getSelectedValue().getValue();
-			pRightListModel.addElement(pLeftList.getSelectedValue());
-			pLeftListModel.remove(pLeftList.getSelectedIndex());
-		}else {
-			JOptionPane.showMessageDialog(null, "Mazo lleno");
+		if(pLeftList.getSelectedValue()!=null) {
+			if(!isDeckCompleted(pLeftList)) {
+				valTotal = valTotal + pLeftList.getSelectedValue().getValue();
+				pRightListModel.addElement(pLeftList.getSelectedValue());
+				pLeftListModel.remove(pLeftList.getSelectedIndex());
+			}else {
+				JOptionPane.showMessageDialog(null, "Mazo lleno");
+			}
 		}
 	}
 	
@@ -74,38 +77,49 @@ public class Logica {
 		return valTotal+pLeftList.getSelectedValue().getValue()>20;
 	}
 	
+	//guarda un mazo en mognoDB
 	public void saveDeck(DefaultListModel<Card> pLeftListModel, DefaultListModel<Card> pRightListModel, String deckName) {
-		if(!load) {
-			if(!(deckName=JOptionPane.showInputDialog("Introduce el nombre del mazo")).equals("")) {
-				ArrayList<Card> allCards = new ArrayList<Card>();
-				for (Object card : pRightListModel.toArray()) {
-					allCards.add((Card)card);
-				}
-				Deck deck = new Deck(deckName, valTotal, allCards);
-				if(mongoDeckImpl.saveDeck(deck)) {
-					JOptionPane.showMessageDialog(null, "Mazo insertado correcamente");
-				}else {
-					JOptionPane.showMessageDialog(null, "Este mazo ya existe", "Error al insertar el mazo", JOptionPane.WARNING_MESSAGE);
+		ArrayList<Card> allCards = new ArrayList<Card>();
+		if(loadDeck==null) {
+			deckName=JOptionPane.showInputDialog("Introduce el nombre del mazo");
+			if(deckName!=null) {
+				if(!deckName.equals("")) {
+					for (Object card : pRightListModel.toArray()) {
+						allCards.add((Card)card);
+					}
+					Deck deck = new Deck(deckName, valTotal, allCards);
+					if(mongoDeckImpl.saveDeck(deck)) {
+						JOptionPane.showMessageDialog(null, "Mazo insertado correcamente");
+						loadCards(pLeftListModel, pRightListModel);
+					}else {
+						JOptionPane.showMessageDialog(null, "Este mazo ya existe", "Error al insertar el mazo", JOptionPane.WARNING_MESSAGE);
+					}
 				}
 			}
-		}else {
+		}else {//si se habia cargado un mazo, no preguntamos nombre y actualizamos el guardado
+			int deckValue = 0;
+			for (Object card : pRightListModel.toArray()) {
+				allCards.add((Card)card);
+				deckValue = deckValue + ((Card)card).getValue();
+			}
+			loadDeck.setCards(allCards);
+			loadDeck.setDeckValue(deckValue);
 			if(mongoDeckImpl.updateDeck(loadDeck)) {
 				JOptionPane.showMessageDialog(null, "Mazo actualizado correcamente");
+				loadCards(pLeftListModel, pRightListModel);
+				loadDeck=null;
 			}else {
 				JOptionPane.showMessageDialog(null, "Vuelva a cargar el mazo e intente volver a actualizarlo", "Error al actualizar el mazo", JOptionPane.WARNING_MESSAGE);
 			}
 		}
-		loadDeck=null;
-		load=false;
-		loadCards(pLeftListModel, pRightListModel);
 	}
 	
+	//cargamos un mazo con el nombre seleccionado
 	public void getCardsFromDeck(DefaultListModel<Card> pLeftListModel, DefaultListModel<Card> pRightListModel, String name){
 		if(!name.equals("")) {
 			loadDeck = mongoDeckImpl.getDeckFromName(name);
 			
 			if(loadDeck!=null) {
-				load=true;
 				loadCards(pLeftListModel, pRightListModel);
 				for (Card card : loadDeck.getCards()) {
 					for (Card cardInUse : ExistCardImpl.getInstance().getAllCards()) {
@@ -117,10 +131,10 @@ public class Logica {
 					}
 				}
 			}else {
-				JOptionPane.showMessageDialog(null, "Mazo no encontrado");
+				JOptionPane.showMessageDialog(null, "Este mazo no existe");
 			}
 		}else {
-			JOptionPane.showMessageDialog(null, "Este mazo no existe");
+			JOptionPane.showMessageDialog(null, "Se tiene que poner un nombre");
 		}
 	}
 }

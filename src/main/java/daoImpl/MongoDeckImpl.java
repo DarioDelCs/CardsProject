@@ -1,7 +1,5 @@
 package daoImpl;
 
-import java.util.NoSuchElementException;
-
 import org.bson.Document;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -10,7 +8,6 @@ import com.google.gson.Gson;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 
@@ -24,53 +21,45 @@ public class MongoDeckImpl implements IDeck{
 	private MongoDatabase database;
 	private MongoCollection<Document> collection;
 	
+	//abrimos la conexion
 	private void open() {
 		connectionString = new MongoClientURI("mongodb://localhost:27017");
 		mongoClient = new MongoClient(connectionString);
+		database = mongoClient.getDatabase("dbDecks");//nos conectamos a la base de datos dbDecks(si no esta la creara al insertar)
+		collection = database.getCollection("decks");//recogemos la colecion elegida, si no existe al insertar la creara
 	}
+	//cerramos la conexion
 	private void close() {
+		collection=null;
+		database=null;
 		mongoClient.close();
 		connectionString=null;
 	}
 	
-	//metodo para conectarnos a una BD y abrir(o crear en caso de que aun no exista) una coleccion
-	private void connect() {
-		database = mongoClient.getDatabase("dbDecks");//nos conectamos a la base de datos dbDecks(si no esta la creara al insertar)
-		collection = database.getCollection("decks");//recogemos la colecion elegida, si no existe al insertar la creara
-	}
-	private void disconnect() {
-		collection=null;
-		database=null;
-	}
-	
 	public Deck getDeckFromName(String name) {
 		open();
-		connect();
 		
-		MongoCursor<Document> cursor = collection.find(Filters.eq("name", name)).iterator();
+		Document document = collection.find(Filters.eq("name", name)).first();//como sabemos que los nombres no se repiten podemos hacer un first y encontramos el que toca
 		
 		Deck deck;
 		try {
-			Document document = cursor.next();
 			deck = new Gson().fromJson(document.toJson(), Deck.class);
-		}catch (NoSuchElementException e) {
+		}catch (Exception e) {
 			deck=null;
 		}
 
-		disconnect();
 		close();
 		return deck;
 	}
 
 	public boolean saveDeck(Deck deck) {
 		open();
-		connect();
 
-		MongoCursor<Document> cursor = collection.find(Filters.eq("name", deck.getName())).iterator();
+		Document document = collection.find(Filters.eq("name", deck.getName())).first();
 		ObjectMapper mapper = new ObjectMapper();
 
 		boolean saved=false;
-		if(!cursor.hasNext()) {
+		if(document==null) {
 			String userJson = null;
 			try {
 				userJson = mapper.writeValueAsString(deck);
@@ -82,20 +71,18 @@ public class MongoDeckImpl implements IDeck{
 			saved=true;
 		}
 		
-		disconnect();
 		close();
 		return saved;
 	}
 	
 	public boolean updateDeck(Deck deck) {
 		open();
-		connect();
 
-		MongoCursor<Document> cursor = collection.find(Filters.eq("name", deck.getName())).iterator();
+		Document document = collection.find(Filters.eq("name", deck.getName())).first();
 		ObjectMapper mapper = new ObjectMapper();
 		
 		boolean saved=false;
-		if(cursor.hasNext()) {
+		if(document!=null) {
 			String userJson = null;
 			try {
 				userJson = mapper.writeValueAsString(deck);
@@ -103,13 +90,10 @@ public class MongoDeckImpl implements IDeck{
 				e.printStackTrace();
 			}
             Document userDoc = Document.parse(userJson);
-            System.out.println(Filters.eq("name", deck.getName()));
-			collection.updateOne(Filters.eq("name", deck.getName()), userDoc);
+			collection.findOneAndReplace(Filters.eq("name", deck.getName()), userDoc);
 			saved=true;
 		}
 		
-		
-		disconnect();
 		close();
 		return saved;
 	}

@@ -23,23 +23,32 @@ public class ExistCardImpl implements ICard{
 	
 	private final String driver = "org.exist.xmldb.DatabaseImpl"; 
 	private final String uri = "xmldb:exist://localhost:8080/exist/xmlrpc/db/"; //modificar por el puerto correspondiendo, y la IP en caso de que no sea en local
-	private final String resourceName = "cartas.xml"; //modificar por el nombre que tiene el fichero en la base de datos
+	private final String resourceName = "card_collection.xml"; //modificar por el nombre que tiene el fichero en la base de datos
 	
 	private Class cl;
 	private Database database;
+	private Collection col;
 	
 	private ArrayList<Card> cardList = new ArrayList<Card>();
 	
+	//abrimos la conexion
 	private void open() {
 		try {
 	        cl = Class.forName(driver);
 	        database = (Database) cl.newInstance();
 			DatabaseManager.registerDatabase(database);
+            col = DatabaseManager.getCollection(uri); 
 		} catch (Exception e) {
 			e.printStackTrace();
 		} 
 	}
+	//cerramos la conexion
 	private void close() {
+		try {
+			col.close();
+		} catch (XMLDBException e) {
+			e.printStackTrace();
+		}
 		cl = null;
 		database = null;
 	}
@@ -54,9 +63,8 @@ public class ExistCardImpl implements ICard{
 	//al no dejar que se instancia mas de una vez, solo nos conectaremos a eXist la primera vez que creemos una instancia
 	private ExistCardImpl() {
 		open();
+		
 		try {
-            Collection col = DatabaseManager.getCollection(uri); 
-
             XMLResource res = (XMLResource) col.getResource(resourceName);
             JSONObject xmlJSONObj = XML.toJSONObject((String)res.getContent());
 
@@ -78,14 +86,14 @@ public class ExistCardImpl implements ICard{
 		return cardList;
 	}
 	
-	public Card getCardFromId(int id) {
-		for (Card card : cardList) {
-			if (card.getId() == id) {
-				return card;
-			}
-		}
-		return null;
-	}
+//	public Card getCardFromId(int id) {
+//		for (Card card : cardList) {
+//			if (card.getId() == id) {
+//				return card;
+//			}
+//		}
+//		return null;
+//	}
 	
 //	public void del(int index) {
 //		cardList.remove(index);
